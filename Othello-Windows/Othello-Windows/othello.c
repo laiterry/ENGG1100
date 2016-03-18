@@ -1,7 +1,34 @@
+/**
+* ENGG1110 Problem Solving by Programming
+*
+* Course Project (Baseline OR Bonus implementation)
+*
+* I declare that the assignment here submitted is original
+* except for source material explicitly acknowledged,
+* and that the same or closely related material has not been
+* previously submitted for another course.
+* I also acknowledge that I am aware of University policy and
+* regulations on honesty in academic work, and of the disciplinary
+* guidelines and procedures applicable to breaches of such
+* policy and regulations, as contained in the website.
+*
+* University Guideline on Academic Honesty:
+* http://www.cuhk.edu.hk/policy/academichonesty/
+* Faculty of Engineering Guidelines to Academic Honesty:
+* http://star.erg.cuhk.edu.hk/upload/ENGG_Discipline.pdf
+*
+* Student Name :LAI JINTAO
+* Student ID : 1155043805
+* Class/Section: L
+* Date : April 17
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
+#include <windows.h>
 
-#define FILENAME  "G:\\Dropbox_Work\\Dropbox\\2015Term2\\ENGG1110\\Project\\Othello-Windows\\Debug\\board.txt"
+//#define FILENAME  "G:\\Dropbox_Work\\Dropbox\\2015Term2\\ENGG1110\\Project\\Othello-Windows\\Debug\\board.txt"
+#define FILENAME  ".\\board.txt"
 ////////////////// function:           print_board //////////////////
 
 void print_board(int board[8][8]) {
@@ -11,27 +38,41 @@ void print_board(int board[8][8]) {
 
 	No return value.
 	*/
+	HANDLE handle;
+	handle = GetStdHandle(STD_OUTPUT_HANDLE);
+
 	int i = 0, j = 0;
+
+
+
 	printf("    0   1   2   3   4   5   6   7\r\n");
 	for (i = 0; i < 8; i++)
 	{
+		
+
 		printf("  +---+---+---+---+---+---+---+---+\r\n");
 		printf("%d ", i);
 		for (j = 0; j < 8; j++)
 		{
-			printf("| ");
+			printf("|");
 			switch (board[i][j])
 			{
 			case 0:
-				printf("  ");
+				printf("   ");
 				break;
 
 			case 1:
-				printf("O ");
+				SetConsoleTextAttribute(handle, FOREGROUND_INTENSITY | FOREGROUND_BLUE  | BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE);//设置为蓝色
+				printf("O●");
+				SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_INTENSITY
+					| FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
 				break;
 
 			case 2:
-				printf("# ");
+				SetConsoleTextAttribute(handle, FOREGROUND_INTENSITY | FOREGROUND_RED  | BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE);//设置为绿色
+				printf("#▆");
+				SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_INTENSITY
+					| FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
 				break;
 			}
 
@@ -54,6 +95,32 @@ void print_game_details(int board[8][8], int current_player) {
 
 	No return value.
 	*/
+	int i = 0, j = 0,player_1 = 0, player_2 = 0;
+	for (i = 0; i < 8; i++)
+	{
+		for (j = 0; j < 8; j++)
+		{
+			switch (board[i][j])
+			{
+			case 0:
+				break;
+
+			case 1:
+				player_1++;
+				break;
+
+			case 2:
+				player_2++;
+				break;
+			}
+
+		}
+	}
+
+
+	printf("Player O : %d\t\t Player # : %d\r\n", player_1, player_2);
+	printf("Current Turn : %d\r\n", current_player);
+		
 }
 
 ////////////////// function:             need_pass //////////////////
@@ -94,7 +161,13 @@ int is_wrong_input_range(int row, int column) {
 	0: no,  i.e., correct input.
 	1: yes, i.e., wrong input.
 	*/
-	return 0;
+
+	if (row < 0 || row > 7 || column < 0 || column > 7)
+		return 1;
+	else
+		return 0;
+
+	
 }
 
 ////////////////// function:        is_empty_cell //////////////////
@@ -107,7 +180,11 @@ int is_empty_cell(int board[8][8], int row, int column) {
 	0: no,  i.e., not empty.
 	1: yes, i.e., empty.
 	*/
-	return 0;
+	if (board[row][column] != 0)
+		return 0;
+	else
+		return 1;
+	
 }
 
 ////////////////// function:    can_flip_opponent //////////////////
@@ -121,7 +198,11 @@ int can_flip_opponent(int board[8][8], int row, int column, int current_player) 
 	0: no,  i.e., cannot flip.
 	1: yes, i.e., can flip.
 	*/
-	return 0;
+	if ()
+
+
+
+	return 1;
 }
 
 ////////////////// function:        flip_opponent //////////////////
@@ -157,6 +238,7 @@ int main(int argc, char **argv) {
 
 	printf("Select Mode: [1. Normal Mode | 2. Debug Mode] ?\n");
 	scanf("%d", &mode);
+	system("cls");
 	/*
 	Do your work below:
 
@@ -171,6 +253,19 @@ int main(int argc, char **argv) {
 		Initialize the board as instructed in
 		P.3 of the specification.
 		*/
+
+		int i = 0, j = 0;
+		for (i = 0; i < 8; i++)
+		{
+			for (j = 0; j < 8; j++)
+			{
+				board[i][j] = 0;
+			}
+		}
+		board[3][4] = 1;
+		board[4][3] = 1;
+		board[3][3] = 2;
+		board[4][4] = 2;
 	}
 	else if (mode == 2) {
 		/*
@@ -244,20 +339,26 @@ int main(int argc, char **argv) {
 			flip the opponent's discs
 			*/
 
+	
+
 			do {
+				printf("\r\n");
 				all_test_pass = 1;
-				scanf("%d%d", &row, &column);
+				printf("Row:[0 - 7] : ");
+				scanf("%d", &row);
+				printf("Column:[0 - 7] : ");
+				scanf("%d",&column);
 
 				if (is_wrong_input_range(row, column) == 1) {
-					printf("print the suitable error message\n");
+					printf("Wrong input range\n");
 					all_test_pass = 0;
 				}
 				else if (is_empty_cell(board, row, column) == 0) {
-					printf("print the suitable error message\n");
+					printf("Invalid location(not empty): (%d,%d) \n", row, column);
 					all_test_pass = 0;
 				}
 				else if (can_flip_opponent(board, row, column, current_player) == 0) {
-					printf("print the suitable error message\n");
+					printf("Invalid location(can not flip): (%d,%d) \n", row, column);
 					all_test_pass = 0;
 				}
 
@@ -277,6 +378,11 @@ int main(int argc, char **argv) {
 
 		Add the code below!
 		*/
+
+		if (current_player == 1)
+			current_player = 2;
+		else
+			current_player = 1;
 
 
 	}  // the big game loop ends
