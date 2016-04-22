@@ -11,6 +11,7 @@
 * regulations on honesty in academic work, and of the disciplinary
 * guidelines and procedures applicable to breaches of such
 * policy and regulations, as contained in the website.
+
 *
 * University Guideline on Academic Honesty:
 * http://www.cuhk.edu.hk/policy/academichonesty/
@@ -28,8 +29,275 @@
 #include <windows.h>
 
 //#define FILENAME  "G:\\Dropbox_Work\\Dropbox\\2015Term2\\ENGG1110\\Project\\Othello-Windows\\Debug\\board.txt"
-#define FILENAME  ".\\board2.txt"
+#define FILENAME  ".\\board.txt"
 ////////////////// function:           print_board //////////////////
+
+#define BONUS 0
+
+
+//functions
+int can_flip_opponent(int board[8][8], int row, int column, int current_player);
+void print_board(int board[8][8], int current_player);
+void print_game_details(int board[8][8], int current_player);
+int need_pass(int board[8][8], int current_player);
+int is_end_game(int board[8][8]);
+int is_wrong_input_range(int row, int column);
+int is_empty_cell(int board[8][8], int row, int column);
+int can_flip_opponent(int board[8][8], int row, int column, int current_player);
+void flip_opponent(int board[8][8], int row, int column, int current_player);
+void print_winner(int board[8][8]);
+void SaveBoard(int board[8][8], int save_board[64][8][8], int round);
+void RollBack(int board[8][8], int save_board[64][8][8], int  round);
+
+
+
+
+int main(int argc, char **argv) {
+	int current_player = 1;  // current_player can be 1 or 2;
+	int board[8][8];           // store the current game board
+	int save_board[64][8][8];           // store the current game board
+	int round = 0;
+	int row, column, mode, stop, all_test_pass;
+
+	printf("Select Mode: [1. Normal Mode | 2. Debug Mode] ?\n");
+	scanf("%d", &mode);
+
+	//system("cls");
+	/*
+	Do your work below:
+
+	mode == 1: normal mode
+	mode == 2: debug mode
+
+	So, please initialize the board variable accordingly.
+	*/
+
+	if (mode == 1) {
+		/*
+		Initialize the board as instructed in
+		P.3 of the specification.
+		*/
+
+		int i = 0, j = 0;
+		for (i = 0; i < 8; i++)
+		{
+			for (j = 0; j < 8; j++)
+			{
+				board[i][j] = 0;
+			}
+		}
+		board[3][4] = 1;
+		board[4][3] = 1;
+		board[3][3] = 2;
+		board[4][4] = 2;
+	}
+	else if (mode == 2) {
+		/*
+		Initialize the board based on the
+		input file format as described in
+		P.7 of the specification.
+		*/
+		int i = 0, j = 0;
+		FILE *fptr;
+		int num;
+		fptr = fopen(FILENAME, "r"); // open file
+
+		if (fptr == NULL) {
+			printf("Cannot open file!\n");
+			printf("\r\n");system("Pause");
+			return 0;
+		}
+
+		while (1) {
+			if (fscanf(fptr, "%d", &num) != 1)
+				break;
+
+			// Process num here
+			board[i][j] = num;
+			j++;
+			if (j == 8)
+			{
+				j = 0;
+				i++;
+			}
+		}
+		fclose(fptr); // close file
+	}
+
+
+	stop = 0;
+
+	while (stop == 0) { // the big game loop begins
+
+		printf("\r\n\r\n<<<< Round %d >>>>\r\n\r\n", round+1);
+		print_board(board, current_player);
+		print_game_details(board, current_player);
+
+
+		
+		SaveBoard(board, save_board, round); 
+		round++;
+
+		if (is_end_game(board) == 1) {
+			stop = 1;
+			break;
+		}
+
+		if (need_pass(board, current_player) == 1) {
+			printf("You have to pass this turn\n");
+			printf("\r\n");
+		//	system("Pause");
+		}
+		else {
+			/*
+			Inside the else body, you have several things to do.
+
+			- Read input.
+
+			- Check if "row" & "column" are in the wrong input range
+			[ Case 1, table in P.10 of specification ]
+
+			- If "row" & "column" are in the correct input range,
+			check if (row, column) points to an empty cell
+			[ Case 2, table in P.10 of specification ]
+
+			- If (row, column) points to an empty cell,
+			check if the new disc in (row, column) can flip any
+			opponent's discs
+			[ Case 3, table in P.10 of specification ]
+
+
+			When (row, column) passes all the above three tests,
+			flip the opponent's discs
+			*/
+
+
+
+			do {
+				printf("\r\n");
+				all_test_pass = 1;
+
+				if (BONUS)
+				{
+					printf("Row[0-7]    (Undo:-1): ");
+				}
+				else
+				{
+					printf("Row: [0-7]: ");
+				}
+				
+
+				scanf("%d", &row);
+
+				if (BONUS)
+				{
+					if (row == -1)
+					{
+						if (round >= 2)
+						{
+							round = round - 2;
+							RollBack(board, save_board, round);
+
+						}
+						else
+						{
+							printf("already back to the beginning\r\n");
+							round--;
+
+							if (current_player == 1)
+								current_player = 2;
+							else
+								current_player = 1;
+
+							printf("\r\n"); system("pause");
+						}
+						break;
+					}
+				}
+			
+				if (BONUS)
+				{
+					printf("Column[0-7] (Undo:-1): ");
+				}
+				else
+				{
+					printf("Column: [0-7]: ");
+				}
+			
+				
+
+				scanf("%d", &column);
+				if (BONUS)
+				{
+					if (column == -1)
+					{
+						if (round >= 2)
+						{
+							round = round - 2;
+							RollBack(board, save_board, round);
+						}
+						else
+						{
+							printf("Already back to the beginning\r\n");
+							if (current_player == 1)
+								current_player = 2;
+							else
+								current_player = 1;
+
+							printf("\r\n"); system("Pause");
+						}
+						break;
+					}
+				}
+
+
+				if (is_wrong_input_range(row, column) == 1) {
+					printf("Wrong input range\n");
+					all_test_pass = 0;
+				}
+				else if (is_empty_cell(board, row, column) == 0) {
+					printf("Invalid location(not empty): (%d,%d) \n", row, column);
+					all_test_pass = 0;
+				}
+				else if (can_flip_opponent(board, row, column, current_player) == 0) {
+					printf("Invalid location(can not flip): (%d,%d) \n", row, column);
+					all_test_pass = 0;
+				}
+
+				if (all_test_pass == 1) {
+					flip_opponent(board, row, column, current_player);
+				}
+
+			} while (all_test_pass == 0);
+
+		} // end of else body //
+
+		/*
+		Important!!!!!!!!!!
+
+		You must change the current player before
+		going back to the start of the big game loop.
+
+		Add the code below!
+		*/
+
+		if (current_player == 1)
+			current_player = 2;
+		else
+			current_player = 1;
+
+		
+	}  // the big game loop ends
+
+	printf("\r\n<<<< Quit loop; print board and show the winner >>>>\r\n\r\n"); 
+	print_board(board, current_player);
+	print_winner(board);
+	printf("\r\n");
+	system("Pause");
+
+	return 0;
+}
+
 
 
 //done
@@ -41,11 +309,11 @@ void print_board(int board[8][8], int current_player) {
 	No return value.
 	*/
 
-	
-	system("cls");
-	
 
-		
+	//system("cls");
+
+
+
 
 	HANDLE handle;
 	handle = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -57,8 +325,6 @@ void print_board(int board[8][8], int current_player) {
 	printf("    0   1   2   3   4   5   6   7\r\n");
 	for (i = 0; i < 8; i++)
 	{
-
-
 		printf("  +---+---+---+---+---+---+---+---+\r\n");
 		printf("%d ", i);
 		for (j = 0; j < 8; j++)
@@ -67,33 +333,58 @@ void print_board(int board[8][8], int current_player) {
 			switch (board[i][j])
 			{
 			case 0:
-				if (can_flip_opponent(board, i, j, current_player) == 1)
+				if (BONUS)
 				{
-					if (current_player == 1)
-						SetConsoleTextAttribute(handle, BACKGROUND_INTENSITY|BACKGROUND_BLUE);//设置为蓝色
-					else
-						SetConsoleTextAttribute(handle, BACKGROUND_INTENSITY | BACKGROUND_RED);//设置为绿色
-				}
-				
-				printf("   ");
-				SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_INTENSITY
-					| FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+					if (can_flip_opponent(board, i, j, current_player) == 1)
+					{
+						if (current_player == 1)
+							SetConsoleTextAttribute(handle, BACKGROUND_INTENSITY | BACKGROUND_BLUE);//设置为蓝色
+						else
+							SetConsoleTextAttribute(handle, BACKGROUND_INTENSITY | BACKGROUND_RED);//设置为绿色
+					}
 
+				}
+
+
+				printf("   ");
+
+				if (BONUS)
+				{
+					SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_INTENSITY | FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+				}
 
 				break;
 
 			case 1:
-				SetConsoleTextAttribute(handle, FOREGROUND_INTENSITY | FOREGROUND_BLUE | BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE);//设置为蓝色
-				printf("O●");
-				SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_INTENSITY
-					| FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+				if (BONUS)
+				{
+					SetConsoleTextAttribute(handle, FOREGROUND_INTENSITY | FOREGROUND_BLUE | BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE);//设置为蓝色
+					printf("O●");
+					SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_INTENSITY | FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+				}
+				else
+				{
+					printf(" O ");
+				}
+
+
+
+
 				break;
 
 			case 2:
-				SetConsoleTextAttribute(handle, FOREGROUND_INTENSITY | FOREGROUND_RED | BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE);//设置为绿色
-				printf("#▆");
-				SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_INTENSITY
-					| FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+				if (BONUS)
+				{
+					SetConsoleTextAttribute(handle, FOREGROUND_INTENSITY | FOREGROUND_RED | BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE);//设置为绿色
+					printf("#▆");
+					SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_INTENSITY | FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+				}
+				else
+				{
+					printf(" # ");
+				}
+
+
 				break;
 			}
 
@@ -142,34 +433,55 @@ void print_game_details(int board[8][8], int current_player) {
 
 	HANDLE handle;
 	handle = GetStdHandle(STD_OUTPUT_HANDLE);
-	SetConsoleTextAttribute(handle, FOREGROUND_INTENSITY | FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE| BACKGROUND_INTENSITY | BACKGROUND_BLUE);//设置为蓝色
-	printf("White O : %d", player_1);
-	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_INTENSITY| FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
 
-	printf("\t\t");
 
-	SetConsoleTextAttribute(handle, FOREGROUND_INTENSITY | FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | BACKGROUND_INTENSITY | BACKGROUND_RED);//设置为绿色
-	printf("Black # : %d\r\n", player_2);
-	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_INTENSITY | FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
-
-	printf("Current Turn : ");
-	
-
-	if (current_player == 1)
+	if (BONUS)
 	{
-		SetConsoleTextAttribute(handle, FOREGROUND_INTENSITY | FOREGROUND_BLUE | BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE);//设置为蓝色
-		printf("O●");
-		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_INTENSITY
-			| FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+		SetConsoleTextAttribute(handle, FOREGROUND_INTENSITY | FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | BACKGROUND_INTENSITY | BACKGROUND_BLUE);//设置为蓝色
+		printf("Player O : %d", player_1);
+		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_INTENSITY | FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+		printf("\t\t");
+
+		SetConsoleTextAttribute(handle, FOREGROUND_INTENSITY | FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | BACKGROUND_INTENSITY | BACKGROUND_RED);//设置为绿色
+		printf("Player #: %d\r\n", player_2);
+		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_INTENSITY | FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+
+		printf("Current Turn : ");
+
+
+		if (current_player == 1)
+		{
+			SetConsoleTextAttribute(handle, FOREGROUND_INTENSITY | FOREGROUND_BLUE | BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE);//设置为蓝色
+			printf("O●");
+			SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_INTENSITY | FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+		}
+		else
+		{
+			SetConsoleTextAttribute(handle, FOREGROUND_INTENSITY | FOREGROUND_RED | BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE);//设置为绿色
+			printf("#▆");
+			SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_INTENSITY | FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+
+		}
 	}
 	else
 	{
-		SetConsoleTextAttribute(handle, FOREGROUND_INTENSITY | FOREGROUND_RED | BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE);//设置为绿色
-		printf("#▆");
-		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_INTENSITY
-			| FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+		printf("Player O : %d", player_1);
+		printf("\t\t");
+		printf("Player #: %d\r\n", player_2);
+		printf("Current Turn : ");
+		if (current_player == 1)
+		{
+			printf("O");
+		}
+		else
+		{
+			printf("#");
 
+		}
 	}
+
+
+
 	printf("\r\n");
 
 }
@@ -198,7 +510,7 @@ int need_pass(int board[8][8], int current_player) {
 				result = 0;
 				break;
 			}
-			
+
 		}
 
 	}
@@ -221,12 +533,12 @@ int is_end_game(int board[8][8]) {
 	int result = 0;
 
 	int full = 1;
-	
+
 	for (int row = 0; row < 8; row++)
 	{
 		for (int col = 0; col < 8; col++)
 		{
-			if (board[row][col] == 0 )
+			if (board[row][col] == 0)
 			{
 				full = 0;
 				break;
@@ -310,117 +622,156 @@ int can_flip_opponent(int board[8][8], int row, int column, int current_player) 
 
 	// up
 	cp_disc_position = -1;
-	for (int r = row - 1; r >= 0 && board[r][column] != 0 && cp_disc_position == -1; r--)
+	for (int r = row - 1; r >= 0 && board[r][column] != 0; r--)
 	{
 		if (board[r][column] == current_player)
+		{
 			cp_disc_position = r;
+			break;
+		}
+			
 	}
 
 	if (cp_disc_position != -1 && cp_disc_position < row - 1)
 	{
 		can_flip = 1;
+		return can_flip;
 	}
 
 	//down
 	cp_disc_position = -1;
-	for (int r = row + 1; r < 8 && board[r][column] != 0 && cp_disc_position == -1; r++)
+	for (int r = row + 1; r < 8 && board[r][column] != 0; r++)
 	{
 		if (board[r][column] == current_player)
+		{
 			cp_disc_position = r;
+			break;
+		}
+			
 	}
 
-	// Make sure we found a disc and that it is at least 2 spots away
 	if (cp_disc_position != -1 && cp_disc_position > row + 1)
 	{
 		can_flip = 1;
+		return can_flip;
 	}
 
 
 	// right 
-    cp_disc_position = -1;
-	for (int c = column + 1; c < 8 && board[row][c] != 0 && cp_disc_position == -1; c++)
+	cp_disc_position = -1;
+	for (int c = column + 1; c < 8 && board[row][c] != 0; c++)
 	{
 		if (board[row][c] == current_player)
+		{
 			cp_disc_position = c;
+			break;
+		}
+			
 	}
 
 	if (cp_disc_position != -1 && cp_disc_position > column + 1)
 	{
 		can_flip = 1;
+		return can_flip;
 	}
 
 	// left
 	cp_disc_position = -1;
-	for (int c = column - 1; c >= 0 && board[row][c] != 0 && cp_disc_position == -1; c--)
+	for (int c = column - 1; c >= 0 && board[row][c] != 0 ; c--)
 	{
 		if (board[row][c] == current_player)
+		{
 			cp_disc_position = c;
+			break;
+		}
+			
 	}
 
 	if (cp_disc_position != -1 && cp_disc_position < column - 1)
 	{
 		can_flip = 1;
+		return can_flip;
 	}
 
 
 	// up-left
 	cp_disc_position = -1;
 	int c = column - 1;
-	for (int r = row - 1; c >= 0 && r >= 0 && board[r][c] != 0 && cp_disc_position == -1; r--)
+	for (int r = row - 1; c >= 0 && r >= 0 && board[r][c] != 0; r--)
 	{
 		if (board[r][c] == current_player)
+		{
 			cp_disc_position = r;
+			break;
+		}
+			
 		c--;
 	}
 
 	if (cp_disc_position != -1 && cp_disc_position < row - 1)
 	{
 		can_flip = 1;
+		return can_flip;
 	}
 
 	//  up-right 
 	cp_disc_position = -1;
 	c = column + 1;
-	for (int r = row - 1; c < 8 && r >= 0 && board[r][c] != 0 && cp_disc_position == -1; r--)
+	for (int r = row - 1; c < 8 && r >= 0 && board[r][c] != 0; r--)
 	{
 		if (board[r][c] == current_player)
+		{
 			cp_disc_position = r;
+			break;
+		}
+			
 		c++;
 	}
 
 	if (cp_disc_position != -1 && cp_disc_position < row - 1)
 	{
 		can_flip = 1;
+		return can_flip;
 	}
 
 	//  down-left 
 	cp_disc_position = -1;
 	c = column - 1;
-	for (int r = row + 1; c >= 0 && r < 8 && board[r][c] != 0 && cp_disc_position == -1; r++)
+	for (int r = row + 1; c >= 0 && r < 8 && board[r][c] != 0; r++)
 	{
 		if (board[r][c] == current_player)
+		{
 			cp_disc_position = r;
+			break;
+		}
+			
 		c--;
 	}
 
 	if (cp_disc_position != -1 && cp_disc_position > row + 1)
 	{
 		can_flip = 1;
+		return can_flip;
 	}
 
 	// down-right
 	cp_disc_position = -1;
 	c = column + 1;
-	for (int r = row + 1; c < 8 && r < 8 && board[r][c] != 0 && cp_disc_position == -1; r++)
+	for (int r = row + 1; c < 8 && r < 8 && board[r][c] != 0; r++)
 	{
 		if (board[r][c] == current_player)
+		{
 			cp_disc_position = r;
+			break;
+		}
+			
 		c++;
 	}
 
 	if (cp_disc_position != -1 && cp_disc_position > row + 1)
 	{
 		can_flip = 1;
+		return can_flip;
 	}
 
 	return can_flip;
@@ -444,10 +795,14 @@ void flip_opponent(int board[8][8], int row, int column, int current_player) {
 
 	// up
 	cp_disc_position = -1;
-	for (int r = row - 1; r >= 0 && board[r][column] != 0 && cp_disc_position == -1; r--)
+	for (int r = row - 1; r >= 0 && board[r][column] != 0 ; r--)
 	{
 		if (board[r][column] == current_player)
+		{
 			cp_disc_position = r;
+			break;
+		}
+			
 	}
 
 	if (cp_disc_position != -1 && cp_disc_position < row - 1)
@@ -461,10 +816,14 @@ void flip_opponent(int board[8][8], int row, int column, int current_player) {
 
 	//down
 	cp_disc_position = -1;
-	for (int r = row + 1; r < 8 && board[r][column] != 0 && cp_disc_position == -1; r++)
+	for (int r = row + 1; r < 8 && board[r][column] != 0 ; r++)
 	{
 		if (board[r][column] == current_player)
+		{
 			cp_disc_position = r;
+			break;
+		}
+			
 	}
 
 	if (cp_disc_position != -1 && cp_disc_position > row + 1)
@@ -478,11 +837,15 @@ void flip_opponent(int board[8][8], int row, int column, int current_player) {
 
 
 	// right 
-    cp_disc_position = -1;
-	for (int c = column + 1; c < 8 && board[row][c] != 0 && cp_disc_position == -1; c++)
+	cp_disc_position = -1;
+	for (int c = column + 1; c < 8 && board[row][c] != 0; c++)
 	{
 		if (board[row][c] == current_player)
+		{
 			cp_disc_position = c;
+			break;
+		}
+			
 	}
 
 	if (cp_disc_position != -1 && cp_disc_position > column + 1)
@@ -497,10 +860,14 @@ void flip_opponent(int board[8][8], int row, int column, int current_player) {
 
 	// left
 	cp_disc_position = -1;
-	for (int c = column - 1; c >= 0 && board[row][c] != 0 && cp_disc_position == -1; c--)
+	for (int c = column - 1; c >= 0 && board[row][c] != 0 ; c--)
 	{
 		if (board[row][c] == current_player)
+		{
 			cp_disc_position = c;
+			break;
+		}
+			
 	}
 
 	if (cp_disc_position != -1 && cp_disc_position < column - 1)
@@ -512,14 +879,18 @@ void flip_opponent(int board[8][8], int row, int column, int current_player) {
 		}
 	}
 
-	
+
 	// up-left
 	cp_disc_position = -1;
 	int c = column - 1;
-	for (int r = row - 1; c >= 0 && r >= 0 && board[r][c] != 0 && cp_disc_position == -1; r--)
+	for (int r = row - 1; c >= 0 && r >= 0 && board[r][c] != 0; r--)
 	{
 		if (board[r][c] == current_player)
+		{
 			cp_disc_position = r;
+			break;
+		}
+			
 		c--;
 	}
 
@@ -536,10 +907,14 @@ void flip_opponent(int board[8][8], int row, int column, int current_player) {
 	//  up-right 
 	cp_disc_position = -1;
 	c = column + 1;
-	for (int r = row - 1; c < 8 && r >= 0 && board[r][c] != 0 && cp_disc_position == -1; r--)
+	for (int r = row - 1; c < 8 && r >= 0 && board[r][c] != 0; r--)
 	{
 		if (board[r][c] == current_player)
+		{
 			cp_disc_position = r;
+			break;
+		}
+			
 		c++;
 	}
 
@@ -556,14 +931,17 @@ void flip_opponent(int board[8][8], int row, int column, int current_player) {
 	//  down-left 
 	cp_disc_position = -1;
 	c = column - 1;
-	for (int r = row + 1; c >= 0 && r < 8 && board[r][c] != 0 && cp_disc_position == -1; r++)
+	for (int r = row + 1; c >= 0 && r < 8 && board[r][c] != 0; r++)
 	{
 		if (board[r][c] == current_player)
+		{
 			cp_disc_position = r;
+			break;
+		}
+			
 		c--;
 	}
 
-	// Make sure we found a disc and that it is at least 2 spots away
 	if (cp_disc_position != -1 && cp_disc_position > row + 1)
 	{
 		c = column - 1;
@@ -577,10 +955,14 @@ void flip_opponent(int board[8][8], int row, int column, int current_player) {
 	// down-right
 	cp_disc_position = -1;
 	c = column + 1;
-	for (int r = row + 1; c < 8 && r < 8 && board[r][c] != 0 && cp_disc_position == -1; r++)
+	for (int r = row + 1; c < 8 && r < 8 && board[r][c] != 0; r++)
 	{
 		if (board[r][c] == current_player)
+		{
 			cp_disc_position = r;
+			break;
+		}
+			
 		c++;
 	}
 
@@ -628,7 +1010,34 @@ void print_winner(int board[8][8]) {
 		}
 	}
 
-	printf("Player O : %d\t\t Player # : %d\r\n", player_1, player_2);
+	HANDLE handle;
+	handle = GetStdHandle(STD_OUTPUT_HANDLE);
+
+	if (BONUS)
+	{
+		SetConsoleTextAttribute(handle, FOREGROUND_INTENSITY | FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | BACKGROUND_INTENSITY | BACKGROUND_BLUE);//设置为蓝色
+		printf("Player O : %d", player_1);
+		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_INTENSITY | FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+
+		printf("\t\t");
+
+		SetConsoleTextAttribute(handle, FOREGROUND_INTENSITY | FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | BACKGROUND_INTENSITY | BACKGROUND_RED);//设置为绿色
+		printf("Player # : %d\r\n", player_2);
+		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_INTENSITY | FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+	}
+	else
+	{
+		printf("Player O: %d", player_1);
+		printf("\t\t");
+		printf("Player #: %d\r\n", player_2);
+	}
+
+
+
+
+
+
+
 	int winner = 0;
 	if (player_1 != player_2)
 	{
@@ -641,33 +1050,50 @@ void print_winner(int board[8][8]) {
 		HANDLE handle;
 		handle = GetStdHandle(STD_OUTPUT_HANDLE);
 
-		if (winner == 1)
+		if (BONUS)
 		{
-			SetConsoleTextAttribute(handle, FOREGROUND_INTENSITY | FOREGROUND_BLUE | BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE);//设置为蓝色
-			printf("O●");
-			SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_INTENSITY
-				| FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+			if (winner == 1)
+			{
+				SetConsoleTextAttribute(handle, FOREGROUND_INTENSITY | FOREGROUND_BLUE | BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE);//设置为蓝色
+				printf("Player O!");
+				SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_INTENSITY | FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+			}
+			else
+			{
+				SetConsoleTextAttribute(handle, FOREGROUND_INTENSITY | FOREGROUND_RED | BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE);//设置为绿色
+				printf("Player #!");
+				SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_INTENSITY | FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+
+			}
 		}
 		else
 		{
-			SetConsoleTextAttribute(handle, FOREGROUND_INTENSITY | FOREGROUND_RED | BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE);//设置为绿色
-			printf("#▆");
-			SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_INTENSITY
-				| FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+			if (winner == 1)
+			{
+				printf("Player O!");
+			}
+			else
+			{
+				printf("Player #!");
 
+			}
 		}
+
+
+
+
 
 	}
 	else
-		printf("Draw Game");
-	
-	
+		printf("Draw Game!");
+
+
 	printf("\r\n");
 }
 
 ///////////////// Main /////////////////
 
-void SaveBoard(int board[8][8], char save_board[64][8][8], int round)
+void SaveBoard(int board[8][8], int save_board[64][8][8], int round)
 {
 
 	for (int i = 0; i < 8; i++)
@@ -678,7 +1104,7 @@ void SaveBoard(int board[8][8], char save_board[64][8][8], int round)
 }
 
 
-void RollBack(int board[8][8], char save_board[64][8][8], int  round)
+void RollBack(int board[8][8], int save_board[64][8][8], int  round)
 {
 
 	for (int i = 0; i < 8; i++)
@@ -688,217 +1114,3 @@ void RollBack(int board[8][8], char save_board[64][8][8], int  round)
 	}
 }
 
-
-int main(int argc, char **argv) {
-	int current_player = 1;  // current_player can be 1 or 2;
-	int board[8][8];           // store the current game board
-	int save_board[64][8][8];           // store the current game board
-	int round = 0;
-	int row, column, mode, stop, all_test_pass;
-
-	printf("Select Mode: [1. Normal Mode | 2. Debug Mode] ?\n");
-	scanf("%d", &mode);
-	system("cls");
-	/*
-	Do your work below:
-
-	mode == 1: normal mode
-	mode == 2: debug mode
-
-	So, please initialize the board variable accordingly.
-	*/
-
-	if (mode == 1) {
-		/*
-		Initialize the board as instructed in
-		P.3 of the specification.
-		*/
-
-		int i = 0, j = 0;
-		for (i = 0; i < 8; i++)
-		{
-			for (j = 0; j < 8; j++)
-			{
-				board[i][j] = 0;
-			}
-		}
-		board[3][4] = 1;
-		board[4][3] = 1;
-		board[3][3] = 2;
-		board[4][4] = 2;
-	}
-	else if (mode == 2) {
-		/*
-		Initialize the board based on the
-		input file format as described in
-		P.7 of the specification.
-		*/
-		int i = 0, j = 0;
-		FILE *fptr;
-		int num;
-		fptr = fopen(FILENAME, "r"); // open file
-
-		if (fptr == NULL) {
-			printf("Cannot open file!\n");
-			system("Pause");
-			return 0;
-		}
-
-		while (1) {
-			if (fscanf(fptr, "%d", &num) != 1)
-				break;
-
-			// Process num here
-			board[i][j] = num;
-			j++;
-			if (j == 8)
-			{
-				j = 0;
-				i++;
-			}
-		}
-		fclose(fptr); // close file
-	}
-
-
-	stop = 0;
-
-	while (stop == 0) { // the big game loop begins
-
-		print_board(board, current_player);
-		print_game_details(board, current_player);
-
-
-		
-		SaveBoard(board, save_board, round);
-		round++;
-
-		if (is_end_game(board) == 1) {
-			stop = 1;
-			break;
-		}
-
-		if (need_pass(board, current_player) == 1) {
-			printf("You have to pass this turn\n");
-			system("Pause");
-		}
-		else {
-			/*
-			Inside the else body, you have several things to do.
-
-			- Read input.
-
-			- Check if "row" & "column" are in the wrong input range
-			[ Case 1, table in P.10 of specification ]
-
-			- If "row" & "column" are in the correct input range,
-			check if (row, column) points to an empty cell
-			[ Case 2, table in P.10 of specification ]
-
-			- If (row, column) points to an empty cell,
-			check if the new disc in (row, column) can flip any
-			opponent's discs
-			[ Case 3, table in P.10 of specification ]
-
-
-			When (row, column) passes all the above three tests,
-			flip the opponent's discs
-			*/
-
-
-
-			do {
-				printf("\r\n");
-				all_test_pass = 1;
-				printf("Row[0-7] (Undo:-1): ");
-				scanf("%d", &row);
-				if (row == -1)
-				{
-					if (round >= 2)
-					{
-						round=round-2;
-						RollBack(board, save_board, round);
-						
-					}
-					else
-					{
-						printf("Already back to the beginning\r\n");
-						round--;
-
-						if (current_player == 1)
-							current_player = 2;
-						else
-							current_player = 1;
-
-						system("Pause");
-					}
-					break;
-				}
-
-				printf("Column[0-7] (Undo:-1): ");
-				scanf("%d", &column);
-				if (column == -1)
-				{
-					if (round >= 2)
-					{
-						round = round - 2;
-						RollBack(board, save_board, round);
-					}
-					else
-					{
-						printf("Already back to the beginning\r\n");
-						if (current_player == 1)
-							current_player = 2;
-						else
-							current_player = 1;
-
-						system("Pause");
-					}
-					break;
-				}
-
-
-				if (is_wrong_input_range(row, column) == 1) {
-					printf("Wrong input range\n");
-					all_test_pass = 0;
-				}
-				else if (is_empty_cell(board, row, column) == 0) {
-					printf("Invalid location(not empty): (%d,%d) \n", row, column);
-					all_test_pass = 0;
-				}
-				else if (can_flip_opponent(board, row, column, current_player) == 0) {
-					printf("Invalid location(can not flip): (%d,%d) \n", row, column);
-					all_test_pass = 0;
-				}
-
-				if (all_test_pass == 1) {
-					flip_opponent(board, row, column, current_player);
-				}
-
-			} while (all_test_pass == 0);
-
-		} // end of else body //
-
-		/*
-		Important!!!!!!!!!!
-
-		You must change the current player before
-		going back to the start of the big game loop.
-
-		Add the code below!
-		*/
-
-		if (current_player == 1)
-			current_player = 2;
-		else
-			current_player = 1;
-
-		
-	}  // the big game loop ends
-
-	print_board(board, current_player);
-	print_winner(board);
-	system("Pause");
-
-	return 0;
-}
